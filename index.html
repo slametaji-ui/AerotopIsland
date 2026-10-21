@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic Island Windows</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body class="theme-obsidian">
+  <!-- Invisible container anchoring top-center -->
+  <div id="island-container" class="island-container">
+    
+    <!-- The morphing Dynamic Island pill / dot -->
+    <div id="dynamic-island" class="dynamic-island state-dot" tabindex="0">
+      
+      <!-- ================= 1. DOT VIEW (MINIMAL NOTCH CAMERA DOT) ================= -->
+      <div id="dot-view" class="dot-view">
+        <div class="dot-lens">
+          <div class="dot-iris"></div>
+          <div class="dot-glare"></div>
+        </div>
+        <div id="dot-status-aura" class="dot-status-aura"></div>
+      </div>
+
+      <!-- ================= 2. NOTIFICATION VIEW (NEON GLOW BANNER) ================= -->
+      <div id="notification-view" class="notification-view">
+        <div id="notif-app-icon" class="notif-app-icon">🟢</div>
+        <div class="notif-text-group">
+          <div id="notif-title" class="notif-title">WhatsApp Web</div>
+          <div id="notif-body" class="notif-body">Pesan baru masuk...</div>
+        </div>
+        <div class="notif-tag">BARU</div>
+      </div>
+
+      <!-- ================= 3. COMPACT VIEW (PILL VIEW) ================= -->
+      <div id="compact-view" class="compact-view">
+        <div class="compact-left">
+          <div id="compact-status-dot" class="status-dot"></div>
+          <span id="compact-time" class="compact-text">12:00</span>
+          <!-- Dynamic micro-visualizer for active media -->
+          <div id="compact-media-indicator" class="compact-media-bars hidden">
+            <span class="bar bar-1"></span>
+            <span class="bar bar-2"></span>
+            <span class="bar bar-3"></span>
+          </div>
+          <!-- Dynamic micro-timer badge -->
+          <div id="compact-timer-badge" class="compact-badge hidden">
+            <span class="badge-icon">⏱</span>
+            <span id="compact-timer-val">00:00</span>
+          </div>
+        </div>
+
+        <!-- Center subtle camera/notch indicator -->
+        <div class="compact-notch-dot"></div>
+
+        <div class="compact-right">
+          <!-- Compact battery / status -->
+          <div id="compact-battery-group" class="compact-battery">
+            <span id="compact-battery-text">--%</span>
+            <div class="battery-icon-mini">
+              <div id="compact-battery-fill" class="battery-fill-mini"></div>
+              <span id="compact-charging-icon" class="charging-bolt hidden">⚡</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= EXPANDED VIEW ================= -->
+      <div id="expanded-view" class="expanded-view">
+        
+        <!-- Navigation bar inside expanded island -->
+        <div class="expanded-nav">
+          <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="music" title="Media Player">
+              <span class="tab-icon">🎵</span>
+              <span class="tab-label">Music</span>
+            </button>
+            <button class="nav-tab" data-tab="clipboard" title="Clipboard Manager">
+              <span class="tab-icon">📋</span>
+              <span class="tab-label">Clipboard</span>
+            </button>
+            <button class="nav-tab" data-tab="timer" title="Timer & Stopwatch">
+              <span class="tab-icon">⏱️</span>
+              <span class="tab-label">Timer</span>
+            </button>
+            <button class="nav-tab" data-tab="system" title="System & Hardware">
+              <span class="tab-icon">📊</span>
+              <span class="tab-label">System</span>
+            </button>
+            <button class="nav-tab" data-tab="tools" title="Quick Tools">
+              <span class="tab-icon">⚡</span>
+              <span class="tab-label">Tools</span>
+            </button>
+            <button class="nav-tab nav-tab-icon-only" data-tab="settings" title="Settings">
+              <span class="tab-icon">⚙️</span>
+            </button>
+          </div>
+          <div class="nav-actions">
+            <button id="btn-pin" class="btn-nav-action" title="Pin / Lock open">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="17" x2="12" y2="22"></line>
+                <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a1 1 0 0 0 0-2H8a1 1 0 0 0 0 2h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path>
+              </svg>
+            </button>
+            <button id="btn-collapse" class="btn-collapse" title="Collapse Island">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="18 15 12 9 6 15"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB CONTENT: MUSIC PLAYER -->
+        <div id="tab-music" class="tab-pane active">
+          <div class="music-card">
+            <div class="album-art-wrapper">
+              <div class="album-art" id="album-art">
+                <div class="vinyl-groove"></div>
+                <span class="music-emoji" id="music-emoji">🎧</span>
+              </div>
+            </div>
+            
+            <div class="music-details">
+              <div class="track-header">
+                <div class="track-info">
+                  <div class="track-title-row">
+                    <span id="media-source-tag" class="media-source-badge hidden">YouTube</span>
+                    <div class="track-title" id="track-title">Cyber Lofi Beats</div>
+                  </div>
+                  <div class="track-artist" id="track-artist">Ambient Focus Station</div>
+                </div>
+                <!-- Animated sound visualizer waves -->
+                <div class="sound-wave" id="music-wave">
+                  <span class="wave-bar"></span>
+                  <span class="wave-bar"></span>
+                  <span class="wave-bar"></span>
+                  <span class="wave-bar"></span>
+                  <span class="wave-bar"></span>
+                </div>
+              </div>
+
+              <!-- Progress bar -->
+              <div class="scrubber-container">
+                <input type="range" id="track-scrubber" min="0" max="100" value="30" class="custom-slider">
+                <div class="time-stamps">
+                  <span id="time-current">01:12</span>
+                  <span id="time-total">03:45</span>
+                </div>
+              </div>
+
+              <!-- Playback controls -->
+              <div class="music-controls">
+                <button class="ctrl-btn" id="btn-prev" title="Previous Track">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="19 20 9 12 19 4 19 20"></polygon>
+                    <line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line>
+                  </svg>
+                </button>
+                <button class="ctrl-btn play-main" id="btn-play" title="Play / Pause">
+                  <svg id="icon-play" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  <svg id="icon-pause" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                  </svg>
+                </button>
+                <button class="ctrl-btn" id="btn-next" title="Next Track">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                    <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line>
+                  </svg>
+                </button>
+                <div class="volume-box">
+                  <span class="vol-icon" id="btn-mute">🔊</span>
+                  <input type="range" id="vol-slider" min="0" max="100" value="70" class="custom-slider vol-range">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB CONTENT: CLIPBOARD MANAGER -->
+        <div id="tab-clipboard" class="tab-pane">
+          <div class="clipboard-container">
+            <div class="clipboard-toolbar">
+              <div class="clip-filters">
+                <button class="clip-filter-btn active" data-filter="all">All</button>
+                <button class="clip-filter-btn" data-filter="pinned">Pinned 📌</button>
+                <button class="clip-filter-btn" data-filter="text">Text 📝</button>
+                <button class="clip-filter-btn" data-filter="image">Images 🖼️</button>
+              </div>
+              <div class="clip-actions-row">
+                <span id="clip-count-badge" class="clip-count-badge">0 items</span>
+                <button id="btn-clear-clip" class="mini-btn" title="Clear unpinned items">Clear</button>
+              </div>
+            </div>
+
+            <!-- Scrollable list of clipboard cards -->
+            <div id="clipboard-list" class="clipboard-list">
+              <!-- Dynamically populated clipboard items -->
+              <div class="clipboard-empty">
+                <span>📋 Belum ada teks/gambar yang di-copy</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB CONTENT: TIMER & STOPWATCH -->
+        <div id="tab-timer" class="tab-pane">
+          <div class="timer-container">
+            <div class="timer-ring-wrapper">
+              <svg class="timer-ring" width="110" height="110">
+                <circle class="ring-bg" stroke="rgba(255,255,255,0.08)" stroke-width="8" cx="55" cy="55" r="45"></circle>
+                <circle id="timer-progress-ring" class="ring-fg" stroke="var(--accent-color)" stroke-width="8" cx="55" cy="55" r="45" stroke-dasharray="283" stroke-dashoffset="0" stroke-linecap="round"></circle>
+              </svg>
+              <div class="timer-center-text">
+                <span id="timer-display" class="timer-digits">05:00</span>
+                <span id="timer-status-sub" class="timer-sub">Focus Session</span>
+              </div>
+            </div>
+
+            <div class="timer-actions">
+              <div class="quick-presets">
+                <button class="preset-pill active" data-mins="1">1m</button>
+                <button class="preset-pill" data-mins="5">5m</button>
+                <button class="preset-pill" data-mins="15">15m</button>
+                <button class="preset-pill" data-mins="25">25m 🍅</button>
+              </div>
+              <div class="timer-btn-row">
+                <button id="btn-timer-start" class="btn-action primary">Start</button>
+                <button id="btn-timer-reset" class="btn-action secondary">Reset</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB CONTENT: SYSTEM METRICS -->
+        <div id="tab-system" class="tab-pane">
+          <div class="system-grid">
+            <!-- Battery Card -->
+            <div class="metric-card">
+              <div class="metric-head">
+                <span class="metric-icon">🔋</span>
+                <span class="metric-title">Battery</span>
+                <span id="sys-charging-tag" class="status-tag">On Battery</span>
+              </div>
+              <div class="metric-val" id="sys-battery-val">--%</div>
+              <div class="progress-bar-bg">
+                <div id="sys-battery-bar" class="progress-bar-fill" style="width: 50%;"></div>
+              </div>
+            </div>
+
+            <!-- CPU Card -->
+            <div class="metric-card">
+              <div class="metric-head">
+                <span class="metric-icon">⚡</span>
+                <span class="metric-title">CPU Load</span>
+                <span id="sys-uptime-tag" class="status-tag">Live</span>
+              </div>
+              <div class="metric-val" id="sys-cpu-val">--%</div>
+              <div class="progress-bar-bg">
+                <div id="sys-cpu-bar" class="progress-bar-fill" style="width: 25%;"></div>
+              </div>
+            </div>
+
+            <!-- RAM Memory Card -->
+            <div class="metric-card">
+              <div class="metric-head">
+                <span class="metric-icon">🧠</span>
+                <span class="metric-title">RAM Usage</span>
+                <span id="sys-ram-sub" class="status-tag">-- / -- GB</span>
+              </div>
+              <div class="metric-val" id="sys-ram-val">--%</div>
+              <div class="progress-bar-bg">
+                <div id="sys-ram-bar" class="progress-bar-fill" style="width: 40%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB CONTENT: QUICK TOOLS -->
+        <div id="tab-tools" class="tab-pane">
+          <div class="tools-layout">
+            <div class="scratchpad-box">
+              <div class="scratchpad-head">
+                <span>📝 Quick Scratchpad</span>
+                <button id="btn-clear-note" class="mini-btn">Clear</button>
+              </div>
+              <textarea id="scratchpad-input" placeholder="Type a quick note or todo here..."></textarea>
+            </div>
+            <div class="quick-shortcuts">
+              <button class="shortcut-btn" id="sc-calc" title="Calculator">🧮 Calculator</button>
+              <button class="shortcut-btn" id="sc-taskmgr" title="Task Manager">📈 Task Manager</button>
+              <button class="shortcut-btn" id="sc-notepad" title="Notepad">🗒️ Notepad</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB CONTENT: SETTINGS -->
+        <div id="tab-settings" class="tab-pane">
+          <div class="settings-list">
+            <div class="setting-item">
+              <div class="setting-text">
+                <span class="setting-label">Theme Accent</span>
+                <span class="setting-desc">Pilih warna aksen Dynamic Island</span>
+              </div>
+              <div class="color-picker-row">
+                <button class="color-dot theme-obsidian active" data-theme="theme-obsidian" title="Obsidian Pure"></button>
+                <button class="color-dot theme-cyan" data-theme="theme-cyan" title="Cyber Cyan"></button>
+                <button class="color-dot theme-sunset" data-theme="theme-sunset" title="Sunset Orange"></button>
+                <button class="color-dot theme-emerald" data-theme="theme-emerald" title="Emerald Green"></button>
+                <button class="color-dot theme-purple" data-theme="theme-purple" title="Royal Purple"></button>
+              </div>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-text">
+                <span class="setting-label">Auto-Expand on Hover</span>
+                <span class="setting-desc">Otomatis membuka saat cursor diarahkan</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="setting-hover-expand">
+                <span class="slider round"></span>
+              </label>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-text">
+                <span class="setting-label">Simulasi Efek Neon Notifikasi</span>
+                <span class="setting-desc">Uji visual neon masuk notifikasi</span>
+              </div>
+              <div class="timer-btn-row" style="gap: 6px;">
+                <button id="btn-test-wa" class="btn-action primary" style="padding: 4px 8px; font-size: 11px;">WA 🟢</button>
+                <button id="btn-test-email" class="btn-action secondary" style="padding: 4px 8px; font-size: 11px;">Email ✉️</button>
+              </div>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-text">
+                <span class="setting-label">Shortcut Global</span>
+                <span class="setting-desc"><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd></span>
+              </div>
+              <button id="btn-quit-app" class="btn-danger-sm">Quit App</button>
+            </div>
+          </div>
+        </div>
+
+      </div> <!-- /expanded-view -->
+
+    </div> <!-- /dynamic-island -->
+  </div>
+
+  <div id="clipboard-toast" class="clipboard-toast hidden">Tersalin ke clipboard! 📋✨</div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
