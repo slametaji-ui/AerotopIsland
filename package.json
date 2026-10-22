@@ -1,19 +1,22 @@
 {
-  "name": "dynamic-island-windows",
+  "name": "aerotop-island",
   "version": "1.0.0",
-  "description": "Dynamic Island desktop floating widget for Windows 10/11",
+  "description": "Aerotop Island - Futuristic floating notch & ambient desktop assistant for Windows 10/11",
   "main": "main.js",
   "scripts": {
     "prestart": "cmd /c \"taskkill /F /IM electron.exe 2>nul || exit 0\"",
     "start": "electron .",
-    "dev": "electron ."
+    "dev": "electron .",
+    "build": "electron-builder --win",
+    "pack": "electron-builder --win --dir"
   },
   "keywords": [
+    "aerotop",
     "dynamic-island",
     "windows",
-    "electron",
-    "widget",
-    "notch"
+    "notch",
+    "ambient-clock",
+    "widget"
   ],
   "author": "Antigravity",
   "license": "MIT",
@@ -21,6 +24,42 @@
     "loudness": "^0.4.2"
   },
   "devDependencies": {
-    "electron": "^33.2.1"
+    "electron": "^33.2.1",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.aerotop.island",
+    "productName": "Aerotop Island",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!dist/**"
+    ],
+    "extraResources": [
+      "media-controller.ps1",
+      "notification-listener.ps1",
+      "get-media.ps1"
+    ],
+    "win": {
+      "icon": "icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true
+    }
   }
 }

@@ -74,16 +74,47 @@ document.addEventListener('DOMContentLoaded', () => {
   const dotStatusAura = document.getElementById('dot-status-aura');
   const btnTestWa = document.getElementById('btn-test-wa');
   const btnTestEmail = document.getElementById('btn-test-email');
+  const btnTestUsb = document.getElementById('btn-test-usb');
+  const btnTestAmbient = document.getElementById('btn-test-ambient');
+
+  // Ambient & Drive Elements
+  const driveView = document.getElementById('drive-view');
+  const driveBannerTitle = document.getElementById('drive-banner-title');
+  const driveBannerSub = document.getElementById('drive-banner-sub');
+  const btnQuickEject = document.getElementById('btn-quick-eject');
+  const ambientView = document.getElementById('ambient-view');
+  const ambientClockDigits = document.getElementById('ambient-clock-digits');
+  const ambientDateLabel = document.getElementById('ambient-date-label');
+  const ambientTimeSec = document.getElementById('ambient-time-sec');
+  const ambientBatteryText = document.getElementById('ambient-battery-text');
+  const settingAmbientMode = document.getElementById('setting-ambient-mode');
+  const drivesList = document.getElementById('drives-list');
+  const sysStorageSub = document.getElementById('sys-storage-sub');
+
+  // Calc Elements
+  const calcInput = document.getElementById('calc-input');
+  const calcResult = document.getElementById('calc-result');
+  const calcButtons = document.querySelectorAll('.calc-btn');
+  const convPresetBtns = document.querySelectorAll('.conv-preset-btn');
+  const btnCopyCalcRes = document.getElementById('btn-copy-calc-res');
 
   // State
   let isExpanded = false;
   let isPinned = false;
+  let isAmbientActive = false;
   let autoExpandOnHover = localStorage.getItem('auto_expand_hover') !== 'false';
+  let ambientModeEnabled = localStorage.getItem('ambient_mode_enabled') !== 'false';
   let collapseTimer = null;
   let notifTimeout = null;
+  let driveBannerTimeout = null;
+  let lastActiveDrive = null;
+  let lastUserActivity = Date.now();
 
   if (settingHoverExpand) {
     settingHoverExpand.checked = autoExpandOnHover;
+  }
+  if (settingAmbientMode) {
+    settingAmbientMode.checked = ambientModeEnabled;
   }
 
   // ================= 1. HOVER EXPAND, SMOOTH MORPH & DOT STATE =================
@@ -96,6 +127,12 @@ document.addEventListener('DOMContentLoaded', () => {
       clearTimeout(notifTimeout);
       notifTimeout = null;
     }
+    if (driveBannerTimeout) {
+      clearTimeout(driveBannerTimeout);
+      driveBannerTimeout = null;
+    }
+    isAmbientActive = false;
+    lastUserActivity = Date.now();
 
     isExpanded = true;
     dynamicIsland.className = 'dynamic-island state-expanded';
@@ -117,16 +154,82 @@ document.addEventListener('DOMContentLoaded', () => {
       clearTimeout(notifTimeout);
       notifTimeout = null;
     }
+    if (driveBannerTimeout) {
+      clearTimeout(driveBannerTimeout);
+      driveBannerTimeout = null;
+    }
+    isAmbientActive = false;
+    lastUserActivity = Date.now();
 
     isExpanded = false;
     // Morph smoothly back into the minimal DOT
     dynamicIsland.className = 'dynamic-island state-dot';
 
     setTimeout(() => {
-      if (!isExpanded && window.electronAPI) {
+      if (!isExpanded && !isAmbientActive && window.electronAPI) {
         window.electronAPI.setIgnoreMouseEvents(true, { forward: true });
       }
     }, 350);
+  }
+
+  // Drive Banner & Ambient State Triggers
+  function showDriveBanner(drive) {
+    if (!drive || isExpanded) return;
+    lastActiveDrive = drive;
+    isAmbientActive = false;
+    playDriveChime();
+
+    const freeGb = (drive.freeBytes / (1024 ** 3)).toFixed(1);
+    const totalGb = (drive.sizeBytes / (1024 ** 3)).toFixed(1);
+    const driveName = drive.name || 'Removable Disk';
+    driveBannerTitle.textContent = `${driveName} (${drive.deviceId})`;
+    driveBannerSub.textContent = `${freeGb} GB Free of ${totalGb} GB`;
+
+    dynamicIsland.className = 'dynamic-island state-drive';
+
+    if (window.electronAPI) {
+      window.electronAPI.setIgnoreMouseEvents(false);
+    }
+
+    if (driveBannerTimeout) clearTimeout(driveBannerTimeout);
+    driveBannerTimeout = setTimeout(() => {
+      if (!isExpanded && dynamicIsland.classList.contains('state-drive')) {
+        collapseIsland();
+      }
+    }, 5500);
+  }
+
+  function enterAmbientMode() {
+    if (isExpanded || isAmbientActive) return;
+    isAmbientActive = true;
+    lastUserActivity = Date.now();
+
+    if (window.electronAPI && window.electronAPI.openAmbientFullscreen) {
+      window.electronAPI.openAmbientFullscreen();
+    } else {
+      dynamicIsland.className = 'dynamic-island state-ambient';
+      updateAmbientClock();
+      if (window.electronAPI) {
+        window.electronAPI.setIgnoreMouseEvents(false);
+      }
+    }
+  }
+
+  function playDriveChime() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.55);
+    } catch (e) {}
   }
 
   // Notification Neon Chime Sound
@@ -212,7 +315,54 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Test Notification Buttons in Settings
+  if (driveView) {
+    driveView.addEventListener('click', (e) => {
+      e.stopPropagation();
+      expandIsland('system');
+    });
+  }
+
+  if (ambientView) {
+    ambientView.addEventListener('click', (e) => {
+      e.stopPropagation();
+      expandIsland();
+    });
+  }
+
+  if (btnQuickEject) {
+    btnQuickEject.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (lastActiveDrive && window.electronAPI && window.electronAPI.ejectDrive) {
+        btnQuickEject.textContent = '⏳ Ejecting...';
+        const res = await window.electronAPI.ejectDrive(lastActiveDrive.deviceId);
+        if (res.success) {
+          driveBannerTitle.textContent = 'Safe to Remove';
+          driveBannerSub.textContent = `${lastActiveDrive.deviceId} has been safely ejected`;
+          btnQuickEject.textContent = '✅ Ejected';
+          setTimeout(() => collapseIsland(), 2500);
+        } else {
+          btnQuickEject.textContent = '⚠️ Failed';
+          setTimeout(() => { btnQuickEject.textContent = '⏏️ Eject'; }, 2000);
+        }
+      }
+    });
+  }
+
+  // Live Drive Pluggable events
+  if (window.electronAPI && window.electronAPI.onDrivePlugged) {
+    window.electronAPI.onDrivePlugged((drive) => {
+      showDriveBanner(drive);
+      loadSystemDrives();
+    });
+  }
+
+  if (window.electronAPI && window.electronAPI.onDriveUnplugged) {
+    window.electronAPI.onDriveUnplugged(() => {
+      loadSystemDrives();
+    });
+  }
+
+  // Test Buttons in Settings
   if (btnTestWa) {
     btnTestWa.addEventListener('click', () => {
       if (window.electronAPI && window.electronAPI.triggerTestNotification) {
@@ -226,6 +376,25 @@ document.addEventListener('DOMContentLoaded', () => {
       if (window.electronAPI && window.electronAPI.triggerTestNotification) {
         window.electronAPI.triggerTestNotification('email');
       }
+    });
+  }
+
+  if (btnTestUsb) {
+    btnTestUsb.addEventListener('click', () => {
+      showDriveBanner({
+        deviceId: 'F:',
+        name: 'Sandisk Ultra USB',
+        driveType: 2,
+        sizeBytes: 32000000000,
+        freeBytes: 24500000000,
+        isRemovable: true
+      });
+    });
+  }
+
+  if (btnTestAmbient) {
+    btnTestAmbient.addEventListener('click', () => {
+      enterAmbientMode();
     });
   }
 
@@ -347,15 +516,55 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ================= 3. CLOCK =================
+  // ================= 3. CLOCK & IDLE TRACKER =================
   function updateClock() {
     const now = new Date();
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
     compactTime.textContent = `${hours}:${minutes}`;
+
+    // Update Ambient Standby Clock
+    if (ambientClockDigits) {
+      ambientClockDigits.textContent = `${hours}:${minutes}`;
+    }
+    if (ambientTimeSec) {
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      ambientTimeSec.textContent = `:${seconds}`;
+    }
+    if (ambientDateLabel) {
+      const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+      ambientDateLabel.textContent = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+    }
+
+    // Check Idle Condition for Ambient Standby Mode (60 seconds inactivity)
+    if (ambientModeEnabled && !isExpanded && !isAmbientActive) {
+      const idleTime = Date.now() - lastUserActivity;
+      if (idleTime >= 60000) {
+        enterAmbientMode();
+      }
+    }
   }
+
+  function updateAmbientClock() {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    if (ambientClockDigits) ambientClockDigits.textContent = `${hours}:${minutes}`;
+  }
+
   updateClock();
   setInterval(updateClock, 1000);
+
+  // Reset idle timer on user activity
+  ['mousemove', 'mousedown', 'keydown', 'touchstart'].forEach(evt => {
+    window.addEventListener(evt, () => {
+      lastUserActivity = Date.now();
+      if (isAmbientActive && !isExpanded) {
+        collapseIsland();
+      }
+    }, { passive: true });
+  });
 
   // ================= 4. BATTERY API =================
   async function initBattery() {
@@ -383,10 +592,12 @@ document.addEventListener('DOMContentLoaded', () => {
             compactChargingIcon.classList.remove('hidden');
             sysChargingTag.textContent = '⚡ Charging (AC)';
             sysChargingTag.style.color = '#ffd60a';
+            if (ambientBatteryText) ambientBatteryText.textContent = `⚡ ${level}%`;
           } else {
             compactChargingIcon.classList.add('hidden');
             sysChargingTag.textContent = 'On Battery';
             sysChargingTag.style.color = 'var(--text-muted)';
+            if (ambientBatteryText) ambientBatteryText.textContent = `🔋 ${level}%`;
           }
         }
 
@@ -404,7 +615,74 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   initBattery();
 
-  // ================= 5. LIVE SYSTEM METRICS =================
+  // ================= 5. LIVE SYSTEM METRICS & DRIVES =================
+  async function loadSystemDrives() {
+    if (!window.electronAPI || !window.electronAPI.getSystemDrives || !drivesList) return;
+    try {
+      const drives = await window.electronAPI.getSystemDrives();
+      if (!drives || drives.length === 0) {
+        drivesList.innerHTML = '<div class="drive-item-loading">No drives detected</div>';
+        if (sysStorageSub) sysStorageSub.textContent = '0 Drives';
+        return;
+      }
+
+      if (sysStorageSub) sysStorageSub.textContent = `${drives.length} Drives Connected`;
+      drivesList.innerHTML = '';
+
+      drives.forEach(d => {
+        const item = document.createElement('div');
+        item.className = 'drive-item';
+
+        const totalGb = (d.sizeBytes / (1024 ** 3)).toFixed(1);
+        const freeGb = (d.freeBytes / (1024 ** 3)).toFixed(1);
+        const usedGb = Math.max(0, (d.sizeBytes - d.freeBytes) / (1024 ** 3)).toFixed(1);
+        const percentUsed = d.sizeBytes > 0 ? Math.round(((d.sizeBytes - d.freeBytes) / d.sizeBytes) * 100) : 0;
+        const icon = d.isRemovable ? '💾' : '💽';
+        const tagClass = d.isRemovable ? 'removable' : 'fixed';
+        const tagText = d.isRemovable ? 'USB' : 'Internal';
+
+        item.innerHTML = `
+          <div class="drive-item-left">
+            <span class="drive-icon-badge">${icon}</span>
+            <div class="drive-details">
+              <div class="drive-name-row">
+                <span class="drive-name">${d.deviceId} ${d.name || ''}</span>
+                <span class="drive-tag ${tagClass}">${tagText}</span>
+              </div>
+              <span class="drive-sub-stats">${freeGb} GB free of ${totalGb} GB (${percentUsed}% used)</span>
+              <div class="drive-bar-mini">
+                <div class="drive-fill-mini" style="width: ${percentUsed}%;"></div>
+              </div>
+            </div>
+          </div>
+          ${d.isRemovable ? `<button class="btn-eject-mini" data-dev="${d.deviceId}" title="Eject ${d.deviceId}">⏏️ Eject</button>` : ''}
+        `;
+
+        if (d.isRemovable) {
+          const ejectBtn = item.querySelector('.btn-eject-mini');
+          if (ejectBtn) {
+            ejectBtn.addEventListener('click', async (e) => {
+              e.stopPropagation();
+              ejectBtn.textContent = '⏳';
+              const res = await window.electronAPI.ejectDrive(d.deviceId);
+              if (res.success) {
+                ejectBtn.textContent = '✅ Ejected';
+                setTimeout(() => loadSystemDrives(), 1200);
+              } else {
+                ejectBtn.textContent = '⚠️ Fail';
+                setTimeout(() => { ejectBtn.textContent = '⏏️ Eject'; }, 2000);
+              }
+            });
+          }
+        }
+
+        drivesList.appendChild(item);
+      });
+    } catch (e) {
+      console.warn('Failed to load system drives:', e);
+    }
+  }
+
   async function updateSystemMetrics() {
     if (window.electronAPI && window.electronAPI.getSystemMetrics) {
       try {
@@ -420,8 +698,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   }
+
   updateSystemMetrics();
+  loadSystemDrives();
   setInterval(updateSystemMetrics, 2000);
+  setInterval(loadSystemDrives, 5000);
 
   // ================= 6. INTERACTIVE AUDIO & MUSIC PLAYER =================
   const playlist = [
@@ -878,7 +1159,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   scCalc.addEventListener('click', () => {
-    window.open('calculator://');
+    switchTab('calc');
+    if (calcInput) calcInput.focus();
   });
   scTaskmgr.addEventListener('click', () => {
     window.open('ms-settings:appsfeatures');
@@ -886,6 +1168,107 @@ document.addEventListener('DOMContentLoaded', () => {
   scNotepad.addEventListener('click', () => {
     scratchpad.focus();
   });
+
+  // ================= 8B. MINI FLOATING CALCULATOR & CONVERTER =================
+  let calcExpression = '';
+
+  function evaluateCalc(expr) {
+    if (!expr || !expr.trim()) return '0';
+    try {
+      // Clean and sanitize mathematical expression
+      const sanitized = expr
+        .replace(/×/g, '*')
+        .replace(/÷/g, '/')
+        .replace(/−/g, '-')
+        .replace(/%/g, '/100')
+        .replace(/[^0-9+\-*/.()]/g, '');
+
+      if (!sanitized) return '0';
+      // Safe eval of arithmetic math
+      const res = Function(`'use strict'; return (${sanitized})`)();
+      if (typeof res === 'number' && !isNaN(res)) {
+        return Number.isInteger(res) ? String(res) : parseFloat(res.toFixed(4)).toString();
+      }
+      return 'Error';
+    } catch (e) {
+      return '...';
+    }
+  }
+
+  function updateCalcScreen() {
+    if (calcInput) calcInput.value = calcExpression;
+    if (calcResult) {
+      const evalRes = evaluateCalc(calcExpression);
+      calcResult.textContent = `= ${evalRes}`;
+    }
+  }
+
+  calcButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const val = btn.dataset.calc;
+      if (val === 'clear') {
+        calcExpression = '';
+      } else if (val === 'del') {
+        calcExpression = calcExpression.slice(0, -1);
+      } else if (val === '=') {
+        const res = evaluateCalc(calcExpression);
+        if (res !== 'Error' && res !== '...') {
+          calcExpression = res;
+        }
+      } else {
+        calcExpression += val;
+      }
+      updateCalcScreen();
+    });
+  });
+
+  if (calcInput) {
+    calcInput.addEventListener('input', (e) => {
+      calcExpression = e.target.value;
+      if (calcResult) {
+        const evalRes = evaluateCalc(calcExpression);
+        calcResult.textContent = `= ${evalRes}`;
+      }
+    });
+
+    calcInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const res = evaluateCalc(calcExpression);
+        if (res !== 'Error' && res !== '...') {
+          calcExpression = res;
+          updateCalcScreen();
+        }
+      }
+    });
+  }
+
+  // Quick unit converter presets
+  convPresetBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const conv = btn.dataset.conv;
+      if (conv === 'usd-idr') {
+        calcExpression = '1 * 16250';
+      } else if (conv === 'gb-mb') {
+        calcExpression = '1 * 1024';
+      } else if (conv === 'c-f') {
+        calcExpression = '(30 * 9/5) + 32';
+      } else if (conv === 'km-mi') {
+        calcExpression = '10 * 0.621371';
+      }
+      updateCalcScreen();
+    });
+  });
+
+  if (btnCopyCalcRes) {
+    btnCopyCalcRes.addEventListener('click', () => {
+      const evalRes = evaluateCalc(calcExpression);
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(evalRes);
+      }
+      showClipboardToast(`Hasil ${evalRes} disalin! 🧮`);
+    });
+  }
 
   // ================= 9. SETTINGS & THEMES =================
   const savedTheme = localStorage.getItem('island_theme') || 'theme-obsidian';
@@ -911,6 +1294,16 @@ document.addEventListener('DOMContentLoaded', () => {
     autoExpandOnHover = e.target.checked;
     localStorage.setItem('auto_expand_hover', autoExpandOnHover);
   });
+
+  if (settingAmbientMode) {
+    settingAmbientMode.addEventListener('change', (e) => {
+      ambientModeEnabled = e.target.checked;
+      localStorage.setItem('ambient_mode_enabled', ambientModeEnabled);
+      if (!ambientModeEnabled && isAmbientActive) {
+        collapseIsland();
+      }
+    });
+  }
 
   btnQuitApp.addEventListener('click', () => {
     if (window.electronAPI) {

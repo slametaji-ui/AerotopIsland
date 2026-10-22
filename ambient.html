@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aerotop Standby</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #ffffff;
+      background-color: #060710;
+    }
+
+    /* Ambient Wallpaper Screen */
+    .ambient-screen {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: url('ambient_wallpaper.jpg') no-repeat center center;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 40px 60px 48px;
+      animation: ambientFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Subtle twilight vignette overlay */
+    .ambient-screen::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 20%, rgba(10, 10, 25, 0.1) 0%, rgba(5, 5, 14, 0.55) 100%);
+      pointer-events: none;
+    }
+
+    @keyframes ambientFadeIn {
+      from { opacity: 0; transform: scale(1.02); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Top Status Bar (Wifi, Battery, Standby Badge) */
+    .ambient-header {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.75);
+    }
+
+    .ambient-header-badge {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+
+    .header-icons {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Central Giant Lock-Screen Clock */
+    .ambient-clock-center {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 2vh;
+    }
+
+    .ambient-date-text {
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: rgba(255, 255, 255, 0.9);
+      text-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+      margin-bottom: 2px;
+    }
+
+    .ambient-clock-digits {
+      font-size: 140px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1;
+      color: #ffffff;
+      text-shadow: 0 8px 32px rgba(0, 0, 0, 0.65), 0 0 60px rgba(160, 180, 255, 0.25);
+      display: flex;
+      align-items: baseline;
+    }
+
+    .ambient-seconds {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 32px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.65);
+      margin-left: 12px;
+      text-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Bottom Profile & Unlock Tip */
+    .ambient-footer {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-avatar-badge {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.16);
+      backdrop-filter: blur(16px);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .user-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.95);
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+    }
+
+    .unlock-pill {
+      margin-top: 6px;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.7);
+      padding: 6px 18px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: pulseSubtle 3s infinite ease-in-out;
+    }
+
+    @keyframes pulseSubtle {
+      0%, 100% { opacity: 0.7; transform: translateY(0); }
+      50% { opacity: 1; transform: translateY(-2px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-screen" id="ambient-screen">
+    
+    <!-- Top Bar -->
+    <div class="ambient-header">
+      <span class="ambient-header-badge">STANDBY MODE</span>
+      <div class="header-icons">
+        <span id="amb-battery-val">⚡ 100%</span>
+        <span>📶</span>
+      </div>
+    </div>
+
+    <!-- Center Giant Clock & Date -->
+    <div class="ambient-clock-center">
+      <div class="ambient-date-text" id="amb-date">Wednesday, November 1</div>
+      <div class="ambient-clock-digits">
+        <span id="amb-time">17:38</span>
+        <span class="ambient-seconds" id="amb-seconds">:00</span>
+      </div>
+    </div>
+
+    <!-- Bottom Footer (Avatar & Wake Hint) -->
+    <div class="ambient-footer">
+      <div class="user-avatar-badge">🦁</div>
+      <div class="user-name" id="amb-user">Windows User</div>
+      <div class="unlock-pill">
+        <span>🖱️ Gerakkan mouse atau tekan tombol apa saja untuk bangun</span>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const ambTime = document.getElementById('amb-time');
+    const ambSeconds = document.getElementById('amb-seconds');
+    const ambDate = document.getElementById('amb-date');
+    const ambBatteryVal = document.getElementById('amb-battery-val');
+    const ambUser = document.getElementById('amb-user');
+
+    function updateTime() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+
+      ambTime.textContent = `${hours}:${minutes}`;
+      ambSeconds.textContent = `:${seconds}`;
+
+      const options = { weekday: 'long', month: 'long', day: 'numeric' };
+      ambDate.textContent = now.toLocaleDateString('en-US', options);
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    // Sync Battery
+    if ('getBattery' in navigator) {
+      navigator.getBattery().then(bat => {
+        function updateBat() {
+          const lvl = Math.round(bat.level * 100);
+          ambBatteryVal.textContent = `${bat.charging ? '⚡' : '🔋'} ${lvl}%`;
+        }
+        updateBat();
+        bat.addEventListener('levelchange', updateBat);
+        bat.addEventListener('chargingchange', updateBat);
+      });
+    }
+
+    // Dismiss on any user input
+    let isClosing = false;
+    function dismissAmbient() {
+      if (isClosing) return;
+      isClosing = true;
+      if (window.electronAPI && window.electronAPI.closeAmbientFullscreen) {
+        window.electronAPI.closeAmbientFullscreen();
+      }
+    }
+
+    // Listen to mouse movement with debounce threshold
+    let moveCount = 0;
+    window.addEventListener('mousemove', (e) => {
+      moveCount++;
+      if (moveCount > 8) {
+        dismissAmbient();
+      }
+    });
+
+    ['mousedown', 'keydown', 'touchstart'].forEach(evt => {
+      window.addEventListener(evt, dismissAmbient);
+    });
+  </script>
+</body>
+</html>

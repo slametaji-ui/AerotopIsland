@@ -31,8 +31,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   quitApp: () => ipcRenderer.send('quit-app'),
   hideApp: () => ipcRenderer.send('hide-app'),
-  setWindowPosition: (offsetY) => ipcRenderer.send('set-window-position', offsetY),
+  // Storage & USB Drive APIs
+  getSystemDrives: () => ipcRenderer.invoke('get-system-drives'),
+  ejectDrive: (deviceId) => ipcRenderer.invoke('eject-drive', deviceId),
+  onDrivePlugged: (callback) => {
+    ipcRenderer.on('drive-plugged', (_event, drive) => callback(drive));
+  },
+  onDriveUnplugged: (callback) => {
+    ipcRenderer.on('drive-unplugged', (_event, drive) => callback(drive));
+  },
   onToggleExpand: (callback) => {
     ipcRenderer.on('toggle-expand-island', (_event, value) => callback(value));
-  }
+  },
+  openAmbientFullscreen: () => ipcRenderer.send('open-ambient-fullscreen'),
+  closeAmbientFullscreen: () => ipcRenderer.send('close-ambient-fullscreen')
 });

@@ -154,6 +154,32 @@ html, body {
   }
 }
 
+/* 2B. DRIVE / USB INSERT STATE */
+.dynamic-island.state-drive {
+  width: 360px;
+  height: 44px;
+  border-radius: 9999px;
+  background: #08090e;
+  border-color: #3b82f6;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), 0 0 20px rgba(59, 130, 246, 0.4);
+  animation: drivePulse 2s infinite ease-in-out;
+}
+
+@keyframes drivePulse {
+  0%, 100% { box-shadow: 0 0 14px rgba(59, 130, 246, 0.35); }
+  50% { box-shadow: 0 0 24px rgba(59, 130, 246, 0.65), 0 0 35px rgba(59, 130, 246, 0.25); }
+}
+
+/* 2C. AMBIENT STANDBY CLOCK STATE */
+.dynamic-island.state-ambient {
+  width: 270px;
+  height: 48px;
+  border-radius: 9999px;
+  background: rgba(9, 10, 16, 0.94);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.88), 0 0 18px rgba(255, 255, 255, 0.08);
+}
+
 /* 3. COMPACT STATE (PILL) */
 .dynamic-island.state-compact {
   width: 220px;
@@ -163,8 +189,8 @@ html, body {
 
 /* 4. EXPANDED STATE (FULL CARD) */
 .dynamic-island.state-expanded {
-  width: 520px;
-  height: 236px;
+  width: 580px;
+  height: 290px;
   border-radius: 30px;
   cursor: default;
   background: linear-gradient(180deg, #0d0d12 0%, #050508 100%);
@@ -172,7 +198,7 @@ html, body {
 }
 
 /* ================= VIEW VISIBILITY CONTROL ================= */
-.dot-view, .notification-view, .compact-view, .expanded-view {
+.dot-view, .notification-view, .drive-view, .ambient-view, .compact-view, .expanded-view {
   display: none !important;
 }
 
@@ -181,6 +207,14 @@ html, body {
 }
 
 .dynamic-island.state-notification .notification-view {
+  display: flex !important;
+}
+
+.dynamic-island.state-drive .drive-view {
+  display: flex !important;
+}
+
+.dynamic-island.state-ambient .ambient-view {
   display: flex !important;
 }
 
@@ -507,22 +541,32 @@ html, body {
 .nav-tabs {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.nav-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-tab {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   background: transparent;
   border: none;
   outline: none;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
-  padding: 5px 9px;
-  border-radius: 12px;
+  padding: 4px 8px;
+  border-radius: 10px;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.2s ease;
 }
 
@@ -538,12 +582,12 @@ html, body {
 }
 
 .nav-tab.nav-tab-icon-only {
-  padding: 5px 8px;
+  padding: 4px 7px;
   justify-content: center;
 }
 
 .nav-tab.nav-tab-icon-only .tab-icon {
-  font-size: 13px;
+  font-size: 12px;
   margin: 0;
 }
 
@@ -583,12 +627,26 @@ html, body {
 .tab-pane {
   display: none;
   width: 100%;
-  height: calc(100% - 40px);
+  height: calc(100% - 44px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
   animation: fadeInPane 0.25s ease forwards;
 }
 
+.tab-pane::-webkit-scrollbar {
+  width: 4px;
+}
+
+.tab-pane::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
 .tab-pane.active {
-  display: block;
+  display: flex;
+  flex-direction: column;
 }
 
 @keyframes fadeInPane {
@@ -1449,4 +1507,416 @@ input:checked + .slider:before {
 @keyframes toastPop {
   from { opacity: 0; transform: translate(-50%, 6px) scale(0.95); }
   to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+/* ================= DRIVE / USB BANNER VIEW ================= */
+.drive-view {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  gap: 12px;
+}
+
+.drive-banner-icon {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 6px rgba(59, 130, 246, 0.6));
+}
+
+.drive-banner-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.drive-banner-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drive-banner-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drive-eject-btn {
+  background: rgba(59, 130, 246, 0.18);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.drive-eject-btn:hover {
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.6);
+}
+
+/* ================= AMBIENT STANDBY CLOCK VIEW ================= */
+.ambient-view {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.ambient-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.ambient-badge {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--accent-color);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.ambient-sec {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-top: 1px;
+}
+
+.ambient-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ambient-clock {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #fff;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+  line-height: 1.1;
+}
+
+.ambient-date {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+.ambient-right {
+  display: flex;
+  align-items: center;
+}
+
+.ambient-bat {
+  font-size: 11px;
+  font-weight: 700;
+  color: #34d399;
+}
+
+/* ================= DRIVES LIST IN SYSTEM TAB ================= */
+.metric-card-wide {
+  grid-column: span 3;
+}
+
+.drives-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+  max-height: 80px;
+  overflow-y: auto;
+}
+
+.drive-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 6px 10px;
+  transition: all 0.2s ease;
+}
+
+.drive-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.drive-item-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.drive-icon-badge {
+  font-size: 15px;
+}
+
+.drive-details {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.drive-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.drive-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.drive-tag {
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.drive-tag.removable {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.drive-tag.fixed {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+}
+
+.drive-sub-stats {
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.drive-bar-mini {
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  margin-top: 3px;
+  overflow: hidden;
+}
+
+.drive-fill-mini {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #06b6d4);
+  border-radius: 2px;
+}
+
+.btn-eject-mini {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  color: #f87171;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-eject-mini:hover {
+  background: #ef4444;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+.drive-item-loading {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 8px;
+}
+
+/* ================= CALCULATOR & UNIT CONVERTER PANE ================= */
+.calc-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  padding-bottom: 2px;
+}
+
+.calc-screen {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.calc-input {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 600;
+  width: 65%;
+  outline: none;
+}
+
+.calc-result {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent-color);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.calc-body {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 12px;
+  flex: 1;
+}
+
+.calc-keypad {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  align-content: stretch;
+}
+
+.calc-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 9px;
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  min-height: 28px;
+}
+
+.calc-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.calc-btn:active {
+  transform: translateY(0);
+}
+
+.calc-btn.op {
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+.calc-btn.op.action {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.calc-btn.equals {
+  background: var(--accent-color);
+  color: #000;
+  font-weight: 800;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
+.calc-converter-side {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+
+.conv-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.conv-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+
+.conv-preset-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 7px;
+  color: var(--text-main);
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 5px 8px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.conv-preset-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: var(--accent-color);
+}
+
+.conv-copy-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 7px;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.conv-copy-btn:hover {
+  background: var(--accent-color);
+  color: #000;
 }

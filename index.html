@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dynamic Island Windows</title>
+  <title>Aerotop Island</title>
+  <link rel="icon" type="image/png" href="favicon.png">
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,6 +34,31 @@
           <div id="notif-body" class="notif-body">Pesan baru masuk...</div>
         </div>
         <div class="notif-tag">BARU</div>
+      </div>
+
+      <!-- ================= 2B. USB & STORAGE NOTCH BANNER ================= -->
+      <div id="drive-view" class="drive-view">
+        <div class="drive-banner-icon" id="drive-banner-icon">💾</div>
+        <div class="drive-banner-info">
+          <div class="drive-banner-title" id="drive-banner-title">USB Drive (F:)</div>
+          <div class="drive-banner-sub" id="drive-banner-sub">28.4 GB Free of 32 GB</div>
+        </div>
+        <button id="btn-quick-eject" class="drive-eject-btn" title="Safely Eject Drive">⏏️ Eject</button>
+      </div>
+
+      <!-- ================= 2C. AMBIENT STANDBY CLOCK VIEW ================= -->
+      <div id="ambient-view" class="ambient-view">
+        <div class="ambient-left">
+          <span class="ambient-badge">STANDBY</span>
+          <span id="ambient-time-sec" class="ambient-sec">:00</span>
+        </div>
+        <div class="ambient-center">
+          <div class="ambient-clock" id="ambient-clock-digits">12:34</div>
+          <div class="ambient-date" id="ambient-date-label">Kamis, 22 Okt</div>
+        </div>
+        <div class="ambient-right">
+          <span id="ambient-battery-text" class="ambient-bat">⚡ 95%</span>
+        </div>
       </div>
 
       <!-- ================= 3. COMPACT VIEW (PILL VIEW) ================= -->
@@ -93,6 +119,10 @@
             <button class="nav-tab" data-tab="tools" title="Quick Tools">
               <span class="tab-icon">⚡</span>
               <span class="tab-label">Tools</span>
+            </button>
+            <button class="nav-tab" data-tab="calc" title="Calculator & Converter">
+              <span class="tab-icon">🧮</span>
+              <span class="tab-label">Calc</span>
             </button>
             <button class="nav-tab nav-tab-icon-only" data-tab="settings" title="Settings">
               <span class="tab-icon">⚙️</span>
@@ -279,6 +309,19 @@
                 <div id="sys-ram-bar" class="progress-bar-fill" style="width: 40%;"></div>
               </div>
             </div>
+
+            <!-- Storage & USB Drive Card -->
+            <div class="metric-card metric-card-wide">
+              <div class="metric-head">
+                <span class="metric-icon">💾</span>
+                <span class="metric-title">Storage & Drives</span>
+                <span id="sys-storage-sub" class="status-tag">Scanning...</span>
+              </div>
+              <div id="drives-list" class="drives-list">
+                <!-- Dynamically populated storage drives -->
+                <div class="drive-item-loading">Scanning drives...</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -296,6 +339,55 @@
               <button class="shortcut-btn" id="sc-calc" title="Calculator">🧮 Calculator</button>
               <button class="shortcut-btn" id="sc-taskmgr" title="Task Manager">📈 Task Manager</button>
               <button class="shortcut-btn" id="sc-notepad" title="Notepad">🗒️ Notepad</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB CONTENT: CALCULATOR & UNIT CONVERTER -->
+        <div id="tab-calc" class="tab-pane">
+          <div class="calc-container">
+            <div class="calc-screen">
+              <input type="text" id="calc-input" class="calc-input" placeholder="0" spellcheck="false">
+              <div id="calc-result" class="calc-result">= 0</div>
+            </div>
+            
+            <div class="calc-body">
+              <div class="calc-keypad">
+                <button class="calc-btn op" data-calc="clear">C</button>
+                <button class="calc-btn op" data-calc="del">⌫</button>
+                <button class="calc-btn op" data-calc="%">%</button>
+                <button class="calc-btn op action" data-calc="/">÷</button>
+
+                <button class="calc-btn" data-calc="7">7</button>
+                <button class="calc-btn" data-calc="8">8</button>
+                <button class="calc-btn" data-calc="9">9</button>
+                <button class="calc-btn op action" data-calc="*">×</button>
+
+                <button class="calc-btn" data-calc="4">4</button>
+                <button class="calc-btn" data-calc="5">5</button>
+                <button class="calc-btn" data-calc="6">6</button>
+                <button class="calc-btn op action" data-calc="-">−</button>
+
+                <button class="calc-btn" data-calc="1">1</button>
+                <button class="calc-btn" data-calc="2">2</button>
+                <button class="calc-btn" data-calc="3">3</button>
+                <button class="calc-btn op action" data-calc="+">+</button>
+
+                <button class="calc-btn zero" data-calc="0">0</button>
+                <button class="calc-btn" data-calc=".">.</button>
+                <button class="calc-btn equals" data-calc="=">=</button>
+              </div>
+
+              <div class="calc-converter-side">
+                <div class="conv-title">⚡ Quick Convert</div>
+                <div class="conv-presets">
+                  <button class="conv-preset-btn" data-conv="usd-idr">💵 1 USD → IDR</button>
+                  <button class="conv-preset-btn" data-conv="gb-mb">💾 1 GB → MB</button>
+                  <button class="conv-preset-btn" data-conv="c-f">🌡️ °C → °F</button>
+                  <button class="conv-preset-btn" data-conv="km-mi">🛣️ KM → Miles</button>
+                </div>
+                <button id="btn-copy-calc-res" class="conv-copy-btn" title="Copy result to clipboard">📋 Copy Result</button>
+              </div>
             </div>
           </div>
         </div>
@@ -330,12 +422,25 @@
 
             <div class="setting-item">
               <div class="setting-text">
-                <span class="setting-label">Simulasi Efek Neon Notifikasi</span>
-                <span class="setting-desc">Uji visual neon masuk notifikasi</span>
+                <span class="setting-label">Idle Desktop Ambient Mode</span>
+                <span class="setting-desc">Jam Standby saat PC idle 60 detik</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="setting-ambient-mode" checked>
+                <span class="slider round"></span>
+              </label>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-text">
+                <span class="setting-label">Simulasi Notch Notifikasi & Drive</span>
+                <span class="setting-desc">Uji efek neon masuk notifikasi / USB</span>
               </div>
               <div class="timer-btn-row" style="gap: 6px;">
                 <button id="btn-test-wa" class="btn-action primary" style="padding: 4px 8px; font-size: 11px;">WA 🟢</button>
                 <button id="btn-test-email" class="btn-action secondary" style="padding: 4px 8px; font-size: 11px;">Email ✉️</button>
+                <button id="btn-test-usb" class="btn-action secondary" style="padding: 4px 8px; font-size: 11px;">USB 💾</button>
+                <button id="btn-test-ambient" class="btn-action secondary" style="padding: 4px 8px; font-size: 11px;">Ambient ⏱️</button>
               </div>
             </div>
 

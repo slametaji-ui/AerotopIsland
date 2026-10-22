@@ -15,13 +15,18 @@ if (!gotTheLock) {
   app.quit();
 } else {
   let mainWindow = null;
+  let ambientWindow = null;
   let tray = null;
   let prevCpuTimes = null;
   let mediaPollInterval = null;
   let clipboardPollInterval = null;
   let notifPollInterval = null;
+  let drivePollInterval = null;
   let isMediaActionRunning = false;
   let isNotifCheckRunning = false;
+  let isDriveCheckRunning = false;
+  let knownDrives = new Map();
+  let isInitialDriveCheck = true;
   let lastNotificationId = 0;
   let isInitialNotifCheck = true;
 
@@ -66,6 +71,14 @@ if (!gotTheLock) {
     return Math.max(0, Math.min(100, usage));
   }
 
+  // Resolve script path for both development and packaged binary
+  function getScriptPath(scriptName) {
+    if (app.isPackaged) {
+      return path.join(process.resourcesPath, scriptName);
+    }
+    return path.join(__dirname, scriptName);
+  }
+
   // Windows Media GSMTC Controller via PowerShell
   function querySystemMedia(action = 'get', value = 0) {
     return new Promise((resolve) => {
@@ -74,7 +87,7 @@ if (!gotTheLock) {
       }
       isMediaActionRunning = true;
 
-      const scriptPath = path.join(__dirname, 'media-controller.ps1');
+      const scriptPath = getScriptPath('media-controller.ps1');
       const args = ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath, '-Action', action, '-Value', String(value)];
 
       execFile('powershell', args, { timeout: 3500 }, (error, stdout) => {
@@ -103,7 +116,7 @@ if (!gotTheLock) {
     if (isNotifCheckRunning) return;
     isNotifCheckRunning = true;
 
-    const scriptPath = path.join(__dirname, 'notification-listener.ps1');
+    const scriptPath = getScriptPath('notification-listener.ps1');
     const args = ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath, '-LastKnownId', String(lastNotificationId)];
 
     execFile('powershell', args, { timeout: 3000 }, (error, stdout) => {
@@ -128,6 +141,72 @@ if (!gotTheLock) {
           isInitialNotifCheck = false;
         }
       } catch (e) {}
+    });
+  }
+
+  // Windows Storage & USB Drives Listener via PowerShell CIM
+  function checkSystemDrives() {
+    if (isDriveCheckRunning) return;
+    isDriveCheckRunning = true;
+
+    const psCommand = `Get-CimInstance Win32_LogicalDisk | Select-Object DeviceId, DriveType, VolumeName, Size, FreeSpace | ConvertTo-Json -Compress`;
+    const args = ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', psCommand];
+
+    execFile('powershell', args, { timeout: 3500 }, (error, stdout) => {
+      isDriveCheckRunning = false;
+      if (error || !stdout) return;
+      try {
+        let drives = JSON.parse(stdout.trim());
+        if (!Array.isArray(drives)) {
+          drives = [drives];
+        }
+
+        const currentMap = new Map();
+        for (const d of drives) {
+          if (!d.DeviceId) continue;
+          currentMap.set(d.DeviceId, {
+            deviceId: d.DeviceId,
+            driveType: d.DriveType, // 2: Removable, 3: Fixed, 4: Network, 5: CD-ROM
+            name: d.VolumeName || (d.DriveType === 2 ? 'USB Drive' : 'Local Disk'),
+            sizeBytes: d.Size || 0,
+            freeBytes: d.FreeSpace || 0,
+            isRemovable: d.DriveType === 2
+          });
+        }
+
+        if (!isInitialDriveCheck && mainWindow && !mainWindow.isDestroyed()) {
+          // Detect newly plugged drives
+          for (const [id, info] of currentMap.entries()) {
+            if (!knownDrives.has(id)) {
+              mainWindow.webContents.send('drive-plugged', info);
+            }
+          }
+          // Detect unplugged drives
+          for (const [id, info] of knownDrives.entries()) {
+            if (!currentMap.has(id)) {
+              mainWindow.webContents.send('drive-unplugged', info);
+            }
+          }
+        }
+
+        knownDrives = currentMap;
+        isInitialDriveCheck = false;
+      } catch (e) {}
+    });
+  }
+
+  function ejectSystemDrive(deviceId) {
+    return new Promise((resolve) => {
+      if (!deviceId) return resolve({ success: false, message: 'Invalid drive' });
+      const cleanId = deviceId.replace(/[^a-zA-Z:]/g, '').toUpperCase();
+      const psCommand = `(New-Object -ComObject Shell.Application).Namespace(17).ParseName('${cleanId}').InvokeVerb('Eject')`;
+      execFile('powershell', ['-NoProfile', '-Command', psCommand], { timeout: 4000 }, (err) => {
+        if (err) {
+          return resolve({ success: false, message: err.message });
+        }
+        knownDrives.delete(cleanId);
+        resolve({ success: true, deviceId: cleanId });
+      });
     });
   }
 
@@ -216,8 +295,8 @@ if (!gotTheLock) {
     const primaryDisplay = screen.getPrimaryDisplay();
     const { width: screenWidth } = primaryDisplay.workAreaSize;
 
-    const windowWidth = 600;
-    const windowHeight = 320;
+    const windowWidth = 680;
+    const windowHeight = 380;
     const initialX = Math.round((screenWidth - windowWidth) / 2);
     const initialY = 6;
 
@@ -232,6 +311,7 @@ if (!gotTheLock) {
       skipTaskbar: true,
       resizable: false,
       hasShadow: false,
+      icon: path.join(__dirname, 'icon.png'),
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
         contextIsolation: true,
@@ -256,6 +336,7 @@ if (!gotTheLock) {
       if (mediaPollInterval) clearInterval(mediaPollInterval);
       if (clipboardPollInterval) clearInterval(clipboardPollInterval);
       if (notifPollInterval) clearInterval(notifPollInterval);
+      if (drivePollInterval) clearInterval(drivePollInterval);
     });
 
     // Start background media polling (YouTube, Spotify, etc.)
@@ -272,16 +353,75 @@ if (!gotTheLock) {
     // Start background notification listener
     checkWindowsNotifications();
     notifPollInterval = setInterval(checkWindowsNotifications, 2500);
+
+    // Start background drive listener (USB & Storage)
+    checkSystemDrives();
+    drivePollInterval = setInterval(checkSystemDrives, 3500);
+  }
+
+  function createAmbientWindow() {
+    if (ambientWindow && !ambientWindow.isDestroyed()) {
+      ambientWindow.show();
+      ambientWindow.focus();
+      return;
+    }
+
+    const primaryDisplay = screen.getPrimaryDisplay();
+    const { width, height } = primaryDisplay.bounds;
+
+    ambientWindow = new BrowserWindow({
+      width,
+      height,
+      x: 0,
+      y: 0,
+      frame: false,
+      fullscreen: true,
+      transparent: false,
+      backgroundColor: '#0a0a14',
+      alwaysOnTop: true,
+      skipTaskbar: true,
+      show: false,
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.js'),
+        contextIsolation: true,
+        nodeIntegration: false
+      }
+    });
+
+    ambientWindow.setAlwaysOnTop(true, 'screen-saver');
+    ambientWindow.loadFile('ambient.html');
+
+    ambientWindow.once('ready-to-show', () => {
+      ambientWindow.show();
+      ambientWindow.focus();
+    });
+
+    ambientWindow.on('closed', () => {
+      ambientWindow = null;
+    });
+  }
+
+  function closeAmbientWindow() {
+    if (ambientWindow && !ambientWindow.isDestroyed()) {
+      ambientWindow.close();
+      ambientWindow = null;
+    }
   }
 
   function setupTray() {
-    const icon = createTrayIcon();
+    const iconPath = path.join(__dirname, 'favicon.png');
+    let icon;
+    try {
+      icon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
+    } catch (e) {
+      icon = createTrayIcon();
+    }
     tray = new Tray(icon);
-    tray.setToolTip('Dynamic Island for Windows');
+    tray.setToolTip('Aerotop Island for Windows');
 
     const contextMenu = Menu.buildFromTemplate([
       {
-        label: 'Dynamic Island Windows',
+        label: 'Aerotop Island',
         enabled: false
       },
       { type: 'separator' },
@@ -299,7 +439,7 @@ if (!gotTheLock) {
         click: () => {
           if (mainWindow) {
             const { width: screenWidth } = screen.getPrimaryDisplay().workAreaSize;
-            mainWindow.setPosition(Math.round((screenWidth - 600) / 2), 6);
+            mainWindow.setPosition(Math.round((screenWidth - 680) / 2), 6);
           }
         }
       },
@@ -313,6 +453,17 @@ if (!gotTheLock) {
               mainWindow.show();
             }
           }
+        }
+      },
+      {
+        label: 'Run on Startup (Auto-run)',
+        type: 'checkbox',
+        checked: app.getLoginItemSettings().openAtLogin,
+        click: (menuItem) => {
+          app.setLoginItemSettings({
+            openAtLogin: menuItem.checked,
+            path: app.getPath('exe')
+          });
         }
       },
       { type: 'separator' },
@@ -464,6 +615,15 @@ if (!gotTheLock) {
     return clipboardHistory;
   });
 
+  // Storage & Drive IPC Handlers
+  ipcMain.handle('get-system-drives', () => {
+    return Array.from(knownDrives.values());
+  });
+
+  ipcMain.handle('eject-drive', async (_event, deviceId) => {
+    return ejectSystemDrive(deviceId);
+  });
+
   ipcMain.on('quit-app', () => {
     app.quit();
   });
@@ -478,8 +638,17 @@ if (!gotTheLock) {
     if (mainWindow) {
       const { width: screenWidth } = screen.getPrimaryDisplay().workAreaSize;
       const newY = Math.max(0, Math.min(200, offsetY));
-      mainWindow.setPosition(Math.round((screenWidth - 600) / 2), newY);
+      mainWindow.setPosition(Math.round((screenWidth - 680) / 2), newY);
     }
+  });
+
+  // Ambient Fullscreen IPC
+  ipcMain.on('open-ambient-fullscreen', () => {
+    createAmbientWindow();
+  });
+
+  ipcMain.on('close-ambient-fullscreen', () => {
+    closeAmbientWindow();
   });
 
   app.whenReady().then(() => {
