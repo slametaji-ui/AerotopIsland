@@ -39,8 +39,7 @@
     ],
     "extraResources": [
       "media-controller.ps1",
-      "notification-listener.ps1",
-      "get-media.ps1"
+      "notification-listener.ps1"
     ],
     "win": {
       "icon": "icon.ico",

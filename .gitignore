@@ -1,3 +1,13 @@
-/node_modules
-dist/
+# Dependencies
+/node_modules/
+package-lock.json
 
+# Build outputs & Installers
+/dist/
+*.exe
+*.blockmap
+
+# OS & Temp files
+.DS_Store
+Thumbs.db
+*.log
