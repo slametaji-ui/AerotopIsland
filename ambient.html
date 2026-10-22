@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aerotop Standby</title>
+  <title>Aerotop Flip Clock Standby</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
   <style>
     * {
       box-sizing: border-box;
@@ -22,31 +22,21 @@
       overflow: hidden;
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       color: #ffffff;
-      background-color: #060710;
+      background-color: #000000;
     }
 
-    /* Ambient Wallpaper Screen */
+    /* Fullscreen Screen Container */
     .ambient-screen {
       position: relative;
       width: 100vw;
       height: 100vh;
-      background: url('ambient_wallpaper.jpg') no-repeat center center;
-      background-size: cover;
+      background: #000000;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       align-items: center;
-      padding: 40px 60px 48px;
-      animation: ambientFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
-    /* Subtle twilight vignette overlay */
-    .ambient-screen::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at 50% 20%, rgba(10, 10, 25, 0.1) 0%, rgba(5, 5, 14, 0.55) 100%);
-      pointer-events: none;
+      padding: 36px 60px 40px;
+      animation: ambientFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
     @keyframes ambientFadeIn {
@@ -54,77 +44,207 @@
       to { opacity: 1; transform: scale(1); }
     }
 
-    /* Top Status Bar (Wifi, Battery, Standby Badge) */
+    /* Top Bar */
     .ambient-header {
       position: relative;
       z-index: 10;
       width: 100%;
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       align-items: center;
-      gap: 16px;
       font-size: 13px;
       font-weight: 600;
-      color: rgba(255, 255, 255, 0.75);
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .ambient-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
     .ambient-header-badge {
-      background: rgba(255, 255, 255, 0.12);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       padding: 4px 12px;
       border-radius: 20px;
       font-size: 11px;
       letter-spacing: 0.8px;
       text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.85);
     }
 
     .header-icons {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 14px;
+      font-size: 13px;
     }
 
-    /* Central Giant Lock-Screen Clock */
-    .ambient-clock-center {
+    /* ================= 3D RETRO FLIP CLOCK ================= */
+    .flip-clock-wrapper {
       position: relative;
       z-index: 10;
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-top: 2vh;
+      justify-content: center;
+      margin: auto 0;
     }
 
-    .ambient-date-text {
-      font-size: 24px;
+    .flip-date-title {
+      font-size: 22px;
       font-weight: 600;
       letter-spacing: 0.5px;
-      color: rgba(255, 255, 255, 0.9);
-      text-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
-      margin-bottom: 2px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 24px;
+      text-transform: capitalize;
     }
 
-    .ambient-clock-digits {
-      font-size: 140px;
-      font-weight: 800;
-      letter-spacing: -2px;
-      line-height: 1;
-      color: #ffffff;
-      text-shadow: 0 8px 32px rgba(0, 0, 0, 0.65), 0 0 60px rgba(160, 180, 255, 0.25);
+    .flip-clock {
       display: flex;
-      align-items: baseline;
+      align-items: center;
+      gap: 36px;
+      perspective: 1200px;
     }
 
-    .ambient-seconds {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 32px;
-      font-weight: 700;
-      color: rgba(255, 255, 255, 0.65);
-      margin-left: 12px;
-      text-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+    /* FLIP CARD STYLING */
+    .flip-card {
+      position: relative;
+      width: 320px;
+      height: 380px;
+      background: #191919;
+      border-radius: 44px;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.06);
+      font-family: 'JetBrains Mono', -apple-system, monospace;
+      font-size: 240px;
+      font-weight: 800;
+      color: #dedede;
+      letter-spacing: -6px;
     }
 
-    /* Bottom Profile & Unlock Tip */
+    /* Center Hinge Notch Cutouts (Classic Flip Mechanism) */
+    .flip-card::before, .flip-card::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 14px;
+      height: 28px;
+      background: #000000;
+      transform: translateY(-50%);
+      z-index: 20;
+    }
+
+    .flip-card::before {
+      left: 0;
+      border-radius: 0 10px 10px 0;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-left: none;
+    }
+
+    .flip-card::after {
+      right: 0;
+      border-radius: 10px 0 0 10px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-right: none;
+    }
+
+    /* Half Flaps (Top & Bottom) */
+    .flip-half {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 50%;
+      overflow: hidden;
+      background: #191919;
+    }
+
+    .flip-half.top {
+      top: 0;
+      border-radius: 44px 44px 0 0;
+      border-bottom: 2px solid #000000;
+      transform-origin: bottom;
+    }
+
+    .flip-half.bottom {
+      bottom: 0;
+      border-radius: 0 0 44px 44px;
+      border-top: 2px solid #000000;
+      transform-origin: top;
+    }
+
+    /* Digit placement in half */
+    .flip-digit {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 380px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .flip-half.top .flip-digit {
+      top: 0;
+    }
+
+    .flip-half.bottom .flip-digit {
+      bottom: 0;
+    }
+
+    /* Subtle horizontal split line and shadow across the card */
+    .card-divider-line {
+      position: absolute;
+      top: 50%;
+      left: 14px;
+      right: 14px;
+      height: 3px;
+      background: #000000;
+      transform: translateY(-50%);
+      z-index: 15;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    }
+
+    /* FLIP ANIMATION MECHANISM */
+    .flip-leaf {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 50%;
+      overflow: hidden;
+      background: #191919;
+      backface-visibility: hidden;
+      transform-style: preserve-3d;
+      z-index: 10;
+    }
+
+    .flip-leaf.leaf-front {
+      top: 0;
+      border-radius: 44px 44px 0 0;
+      border-bottom: 2px solid #000000;
+      transform-origin: bottom;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .flip-leaf.leaf-back {
+      bottom: 0;
+      border-radius: 0 0 44px 44px;
+      border-top: 2px solid #000000;
+      transform-origin: top;
+      transform: rotateX(180deg);
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .flip-card.flipping .leaf-front {
+      transform: rotateX(-180deg);
+    }
+
+    .flip-card.flipping .leaf-back {
+      transform: rotateX(0deg);
+    }
+
+    /* ================= FOOTER USER PROFILE ================= */
     .ambient-footer {
       position: relative;
       z-index: 10;
@@ -134,75 +254,103 @@
       gap: 12px;
     }
 
+    .user-profile-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 6px 16px 6px 8px;
+      border-radius: 9999px;
+      backdrop-filter: blur(12px);
+    }
+
     .user-avatar-badge {
-      width: 52px;
-      height: 52px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.16);
-      backdrop-filter: blur(16px);
-      border: 2px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.15);
+      background-size: cover;
+      background-position: center;
+      border: 1.5px solid rgba(255, 255, 255, 0.25);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 26px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      font-size: 18px;
+      overflow: hidden;
     }
 
     .user-name {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 600;
-      color: rgba(255, 255, 255, 0.95);
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+      color: rgba(255, 255, 255, 0.9);
+      letter-spacing: 0.2px;
     }
 
     .unlock-pill {
-      margin-top: 6px;
-      background: rgba(0, 0, 0, 0.4);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: rgba(255, 255, 255, 0.7);
-      padding: 6px 18px;
-      border-radius: 20px;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.45);
       font-size: 12px;
       font-weight: 500;
       letter-spacing: 0.3px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
       animation: pulseSubtle 3s infinite ease-in-out;
     }
 
     @keyframes pulseSubtle {
-      0%, 100% { opacity: 0.7; transform: translateY(0); }
-      50% { opacity: 1; transform: translateY(-2px); }
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.85; }
     }
   </style>
 </head>
 <body>
   <div class="ambient-screen" id="ambient-screen">
     
-    <!-- Top Bar -->
+    <!-- Top Header -->
     <div class="ambient-header">
-      <span class="ambient-header-badge">STANDBY MODE</span>
+      <div class="ambient-header-left">
+        <span class="ambient-header-badge">AEROTOP FLIP CLOCK</span>
+      </div>
       <div class="header-icons">
         <span id="amb-battery-val">⚡ 100%</span>
         <span>📶</span>
       </div>
     </div>
 
-    <!-- Center Giant Clock & Date -->
-    <div class="ambient-clock-center">
-      <div class="ambient-date-text" id="amb-date">Wednesday, November 1</div>
-      <div class="ambient-clock-digits">
-        <span id="amb-time">17:38</span>
-        <span class="ambient-seconds" id="amb-seconds">:00</span>
+    <!-- 3D Retro Flip Clock Section -->
+    <div class="flip-clock-wrapper">
+      <div class="flip-date-title" id="amb-date">Wednesday, November 1</div>
+      
+      <div class="flip-clock">
+        <!-- HOUR FLIP CARD -->
+        <div class="flip-card" id="card-hours">
+          <div class="flip-half top">
+            <span class="flip-digit digit-top">13</span>
+          </div>
+          <div class="flip-half bottom">
+            <span class="flip-digit digit-bottom">13</span>
+          </div>
+          <div class="card-divider-line"></div>
+        </div>
+
+        <!-- MINUTE FLIP CARD -->
+        <div class="flip-card" id="card-minutes">
+          <div class="flip-half top">
+            <span class="flip-digit digit-top">29</span>
+          </div>
+          <div class="flip-half bottom">
+            <span class="flip-digit digit-bottom">29</span>
+          </div>
+          <div class="card-divider-line"></div>
+        </div>
       </div>
     </div>
 
-    <!-- Bottom Footer (Avatar & Wake Hint) -->
+    <!-- Footer Profile (Real Windows User Profile & Picture) -->
     <div class="ambient-footer">
-      <div class="user-avatar-badge">🦁</div>
-      <div class="user-name" id="amb-user">Windows User</div>
+      <div class="user-profile-row">
+        <div class="user-avatar-badge" id="user-avatar">👤</div>
+        <div class="user-name" id="amb-user">Windows User</div>
+      </div>
       <div class="unlock-pill">
         <span>🖱️ Gerakkan mouse atau tekan tombol apa saja untuk bangun</span>
       </div>
@@ -211,28 +359,97 @@
   </div>
 
   <script>
-    const ambTime = document.getElementById('amb-time');
-    const ambSeconds = document.getElementById('amb-seconds');
     const ambDate = document.getElementById('amb-date');
     const ambBatteryVal = document.getElementById('amb-battery-val');
     const ambUser = document.getElementById('amb-user');
+    const userAvatar = document.getElementById('user-avatar');
+
+    const cardHours = document.getElementById('card-hours');
+    const cardMinutes = document.getElementById('card-minutes');
+
+    let currentHourStr = '';
+    let currentMinuteStr = '';
+
+    // FLIP CARD FUNCTION WITH SMOOTH 3D TRANSITION
+    function flipCard(cardElement, newDigitStr) {
+      const topHalf = cardElement.querySelector('.flip-half.top .digit-top');
+      const bottomHalf = cardElement.querySelector('.flip-half.bottom .digit-bottom');
+      const prevDigitStr = topHalf.textContent;
+
+      if (prevDigitStr === newDigitStr) return;
+
+      // Create animated flaps
+      const leafFront = document.createElement('div');
+      leafFront.className = 'flip-leaf leaf-front';
+      leafFront.innerHTML = `<span class="flip-digit" style="top:0;">${prevDigitStr}</span>`;
+
+      const leafBack = document.createElement('div');
+      leafBack.className = 'flip-leaf leaf-back';
+      leafBack.innerHTML = `<span class="flip-digit" style="bottom:0;">${newDigitStr}</span>`;
+
+      // Update background bottom flap immediately to new digit
+      bottomHalf.textContent = newDigitStr;
+
+      cardElement.appendChild(leafFront);
+      cardElement.appendChild(leafBack);
+
+      // Trigger 3D flip transform
+      requestAnimationFrame(() => {
+        cardElement.classList.add('flipping');
+      });
+
+      setTimeout(() => {
+        topHalf.textContent = newDigitStr;
+        cardElement.classList.remove('flipping');
+        leafFront.remove();
+        leafBack.remove();
+      }, 520);
+    }
 
     function updateTime() {
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
 
-      ambTime.textContent = `${hours}:${minutes}`;
-      ambSeconds.textContent = `:${seconds}`;
+      if (!currentHourStr) {
+        cardHours.querySelector('.flip-half.top .digit-top').textContent = hours;
+        cardHours.querySelector('.flip-half.bottom .digit-bottom').textContent = hours;
+        currentHourStr = hours;
+      } else if (currentHourStr !== hours) {
+        flipCard(cardHours, hours);
+        currentHourStr = hours;
+      }
+
+      if (!currentMinuteStr) {
+        cardMinutes.querySelector('.flip-half.top .digit-top').textContent = minutes;
+        cardMinutes.querySelector('.flip-half.bottom .digit-bottom').textContent = minutes;
+        currentMinuteStr = minutes;
+      } else if (currentMinuteStr !== minutes) {
+        flipCard(cardMinutes, minutes);
+        currentMinuteStr = minutes;
+      }
 
       const options = { weekday: 'long', month: 'long', day: 'numeric' };
       ambDate.textContent = now.toLocaleDateString('en-US', options);
     }
+
     updateTime();
     setInterval(updateTime, 1000);
 
-    // Sync Battery
+    // FETCH REAL WINDOWS PROFILE & PICTURE
+    if (window.electronAPI && window.electronAPI.getUserProfile) {
+      window.electronAPI.getUserProfile().then(profile => {
+        if (profile) {
+          if (profile.username) ambUser.textContent = profile.username;
+          if (profile.avatarDataUrl) {
+            userAvatar.textContent = '';
+            userAvatar.style.backgroundImage = `url("${profile.avatarDataUrl}")`;
+          }
+        }
+      });
+    }
+
+    // SYNC BATTERY STATUS
     if ('getBattery' in navigator) {
       navigator.getBattery().then(bat => {
         function updateBat() {
@@ -245,7 +462,7 @@
       });
     }
 
-    // Dismiss on any user input
+    // DISMISS ON USER INPUT
     let isClosing = false;
     function dismissAmbient() {
       if (isClosing) return;
@@ -255,7 +472,6 @@
       }
     }
 
-    // Listen to mouse movement with debounce threshold
     let moveCount = 0;
     window.addEventListener('mousemove', (e) => {
       moveCount++;

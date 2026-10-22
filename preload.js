@@ -44,5 +44,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('toggle-expand-island', (_event, value) => callback(value));
   },
   openAmbientFullscreen: () => ipcRenderer.send('open-ambient-fullscreen'),
-  closeAmbientFullscreen: () => ipcRenderer.send('close-ambient-fullscreen')
+  closeAmbientFullscreen: () => ipcRenderer.send('close-ambient-fullscreen'),
+  getUserProfile: () => ipcRenderer.invoke('get-user-profile')
 });

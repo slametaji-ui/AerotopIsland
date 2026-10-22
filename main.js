@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, screen, Tray, Menu, nativeImage, globalShortcut, clipboard } = require('electron');
 const path = require('path');
 const os = require('os');
+const fs = require('fs');
 const { execFile } = require('child_process');
 const loudness = require('loudness');
 
@@ -649,6 +650,31 @@ if (!gotTheLock) {
 
   ipcMain.on('close-ambient-fullscreen', () => {
     closeAmbientWindow();
+  });
+
+  ipcMain.handle('get-user-profile', () => {
+    const username = os.userInfo().username || process.env.USERNAME || 'Windows User';
+    let avatarDataUrl = null;
+
+    try {
+      const publicAcc = path.join(process.env.PUBLIC || 'C:\\Users\\Public', 'AccountPictures');
+      if (fs.existsSync(publicAcc)) {
+        const subdirs = fs.readdirSync(publicAcc).filter(f => f.startsWith('S-1-5-'));
+        for (const dir of subdirs) {
+          const fullDir = path.join(publicAcc, dir);
+          const images = fs.readdirSync(fullDir).filter(f => f.endsWith('.jpg') || f.endsWith('.png'));
+          const preferred = images.find(f => f.includes('Image192')) || images.find(f => f.includes('Image208')) || images.find(f => f.includes('Image240')) || images[0];
+          if (preferred) {
+            const imgPath = path.join(fullDir, preferred);
+            const buf = fs.readFileSync(imgPath);
+            avatarDataUrl = 'data:image/jpeg;base64,' + buf.toString('base64');
+            break;
+          }
+        }
+      }
+    } catch (e) {}
+
+    return { username, avatarDataUrl };
   });
 
   app.whenReady().then(() => {
